@@ -1,4 +1,4 @@
-# LEMONS CRM Full Stack Application
+# Application
 
 Author Erekle Giorgadze 
 <table>
@@ -22,8 +22,7 @@ Author Erekle Giorgadze
 ## Requirements
 You need to have PHP version **8.0** or above. Node.js version **12.0** or above.
 
-## Demo
-https://beflex.ge
+
 
 
 ## Installation
