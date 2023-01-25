@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use \Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\RoleController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\API\EndpointController;
-use Spatie\Permission\Models\Permission;
+use App\Models\Permission;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,10 +66,12 @@ Route::group(['prefix' => 'v1','middleware'=>'auth:sanctum'],function () {
      *  Generate permissions routes & endpoint
      */
         $templates = array_values(config('menu.templates'));
-        foreach (Permission::all() as $permissionRow){
-            $generatePermission = explode(' ',$permissionRow->name);
-            foreach ($templates as $endPoint){
-                Route::middleware(["permission:{$generatePermission[0]} {$endPoint['key']}"])->get($endPoint['key'],[EndpointController::class,'index']);
+        if(Schema::hasTable('permissions')){
+            foreach (Permission::all() as $permissionRow){
+                $generatePermission = explode(' ',$permissionRow->name);
+                foreach ($templates as $endPoint){
+                    Route::middleware(["permission:{$generatePermission[0]} {$endPoint['key']}"])->get($endPoint['key'],[EndpointController::class,'index']);
+                }
             }
         }
 });
