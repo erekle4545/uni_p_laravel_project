@@ -1,38 +1,25 @@
 <?php
 
-
-namespace App\Http\Controllers;
+namespace App\Repositories;
 
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use App\Rules\MatchOldPassword;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
-use App\Http\Controllers\interfaces\AuthInterface;
-use PharIo\Version\Exception;
+use App\Repositories\interfaces\AuthRepositoryInterface;
+class AuthRepository implements AuthRepositoryInterface{
 
-class AuthController extends Controller implements AuthInterface
-{
-    public function register(Request $request)
+    /**
+     * @param array $data
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function register(array $data)
     {
-        $data = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|string|unique:users,email',
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols()
-            ]
-        ]);
-
         /** @var \App\Models\User $user */
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password'])
         ]);
-
         $token = $user->createToken('main')->plainTextToken;
 
         return response([
@@ -44,20 +31,11 @@ class AuthController extends Controller implements AuthInterface
 
 
     /**
-     * @param Request $request
-     * Login post request
+     * @param array $credentials
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
-    public function login(Request $request)
+    public function login(array $credentials)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email|string|exists:users,email',
-            'password' => [
-                'required',
-            ],
-            'remember' => 'boolean'
-        ]);
-
         $remember = $credentials['remember'] ?? false;
         unset($credentials['remember']);
 
@@ -79,20 +57,33 @@ class AuthController extends Controller implements AuthInterface
 
     /**
      * @return UserResource
-     * get current user
      */
-
     public function getUser (){
-        $userData = User::where('id',Auth::user()->id)->with(['roles.permissions'])->first();
+        $userData = User::query()->with(['roles.permissions'])->get();
         return new UserResource($userData);
     }
 
 
+    /**
+     * @param array $data
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function assigningRoleToUser(array $data){
+        try {
+            $user = User::where('id',$data['user_id'])->first();
+            $user->each(function ($user) use ($data){
+                $user->assignRole($data['role_id']);
+            });
 
+            return  response($user,200);
+        }catch (\Exception $exception){
+            return response(['result' => 'not found object',"message"=>$exception->getMessage()], 404)->header('Content-Type', 'application/json');
+        }
+
+    }
 
     /**
-     * logout user
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\JsonResponse|\Illuminate\Http\Response
      */
     public function logout()
     {
@@ -131,5 +122,4 @@ class AuthController extends Controller implements AuthInterface
 
         }
     }
-
 }

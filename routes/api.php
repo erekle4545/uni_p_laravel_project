@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use \Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\RoleController;
-use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\EndpointController;
+use App\Http\Controllers\API\RoleController;
 use App\Models\Permission;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +53,8 @@ Route::group(['prefix' => 'v1','middleware'=>'auth:sanctum'],function () {
         Route::resource('/role',RoleController::class);
         Route::put('/update/role/{id}',[RoleController::class,'update']);
         Route::delete('/delete/role/{id}',[RoleController::class,'destroy']);
+        // assign role to user
+        Route::post('/assign/role/user',[AuthController::class,'assigningRoleToUser']);
         // permissions
         Route::resource('/permissions',\App\Http\Controllers\API\PermissionController::class);
         Route::put('/update/permissions/{id}',[\App\Http\Controllers\API\PermissionController::class,'update']);
